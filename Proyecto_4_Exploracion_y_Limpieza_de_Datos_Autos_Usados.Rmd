@@ -1,0 +1,344 @@
+---
+title: "Proyecto 4. Exploración y limpiza de datos usando `Pandas` y `Numpy`"
+subtitle: "*Software para Data Science - MDS - USS*"
+author: "Marcelo Alid-Vaccarezza"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    toc_depth: 3
+    fig_caption: true
+    number_sections: false
+    code_download: false
+    df_print: paged
+---
+
+<div style="text-align: justify">
+
+<br>
+
+<br>
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+------------------------------------------------------------------------
+
+El propósito de este Proyecto es limpiar y analizar datos de vehículos usados aplicando `Numpy` y `Pandas`.
+
+La idea es que el análisis intente dar respuesta a las siguientes preguntas:
+
+-   ¿Qué marca de auto es la más cara en promedio?
+
+-   ¿Influye el kilometraje (en esta base de datos se mide en millas) en el valor medio del precio?
+
+------------------------------------------------------------------------
+
+<br>
+
+## 1. Introduccción
+
+En este proyecto usaremos con un conjunto de datos de autos usados de **eBay** *Kleinanzeigen*, una sección de clasificados del sitio web alemán de **eBay**.
+
+Las columnas:
+
+-   `dateCrawled`: cuándo se rastreó este anuncio por primera vez. Todos los valores de campo se toman a partir de esta fecha.
+-   `name`: nombre del automóvil.
+-   `seller`: si el vendedor es privado o un comerciante.
+-   `offerType`: el tipo de listado.
+-   `price`: el precio del anuncio para vender el automóvil.
+-   `abtest`: si la lista está incluida en una prueba A/B.
+-   `vehicleType`: el tipo de vehículo.
+-   `yearOfRegistration`: el año en el que se registró por primera vez el automóvil.
+-   `gearbox`: el tipo de transmisión.
+-   `powerPS`: la potencia del auto en PS.
+-   `model`: el nombre del modelo de automóvil.
+-   `kilometer`: cuántos kilómetros ha recorrido el automóvil.
+-   `monthOfRegistration`: el mes en el que se registró el automóvil por primera vez.
+-   `fuelType`: qué tipo de combustible usa el automóvil.
+-   `brand`: la marca del automóvil.
+-   `notRepairedDamage`: si el automóvil tiene un daño que aún no se ha reparado.
+-   `dateCreated`: la fecha en la que se creó el anuncio de eBay.
+-   `nrOfPictures`: el número de imágenes del anuncio.
+-   `postalCode`: el código postal para la ubicación del vehículo.
+-   `lastSeenOnline`: cuándo el rastreador vio este anuncio por última vez en línea.
+
+Comencemos importando las bibliotecas que necesitamos y leyendo el conjunto de datos en `Pandas`.
+
+## Instrucciones
+
+1.  Importar las bibliotecas `Pandas` y `NumPy`.
+
+    -   Lea el archivo `autos.csv`en `Pandas` y asígnelo al nombre de variable `autos`.
+    -   Pruebe sin especificar ninguna codificación (que será `UTF-8` por defecto)
+    -   Si obtiene un error de codificación, pruebe las siguientes dos codificaciones más populares (`Latin-1` y `Windows-1252`) hasta que pueda leer el archivo sin errores.
+
+2.  Utilice los métodos `DataFrame.info()` y `DataFrame.head()` para imprimir información sobre el dataframe `autos`, así como las primeras filas.
+
+3.  Describa brevemente sus observaciones.
+
+<br>
+
+## 2. Limpieza de nombres de columnas
+
+De los resultados anteeriores, podemos hacer las siguientes observaciones:
+
+-   El conjunto de datos contiene 20 columnas, la mayoría de las cuales son cadenas de texto.
+-   Algunas columnas tienen valores nulos, pero ninguna tiene más de \~20% de valores nulos.
+-   Los nombres de las columnas usan *camelcase* en lugar del estilo *snakecase*, preferido de `Python`, lo que significa que no podemos simplemente reemplazar los espacios con guiones bajos.
+
+Convierta los nombres de las columnas de *camelcase* a *snakecase* y reformule algunos de los nombres de las columnas en función del diccionario de datos para que sean más descriptivos.
+
+## Instrucciones
+
+1.  Utilice el atributo `DataFrame.columns` para imprimir una matriz de los nombres de columna existentes.
+
+2.  Copie esa matriz y realice las siguientes modificaciones en los nombres de las columnas:
+
+    -   `yearOfRegistration` a `registration_year`
+    -   `monthOfRegistration` a `registration_month`
+    -   `notRepairedDamage` a `unrepaired_damage`
+    -   `dateCreated` a `ad_created`
+    -   El resto de los nombres de las columnas, desde *camelcase* a *snakecase*.
+
+3.  Asigne los nombres de las columnas modificadas al atributo `DataFrame.columns`.
+
+4.  Use `DataFrame.head()` para ver el estado actual del dataframe autos.
+
+5.  Describa y explique los cambios que hizo y por qué los hizo.
+
+<br>
+
+## 3. Exploración y limpieza inicial.
+
+Ahora hagamos una exploración básica de datos para determinar qué otras tareas de limpieza deben realizarse. Inicialmente buscaremos:
+
+-   Columnas de texto donde todos o casi todos los valores son iguales. Estos a menudo se pueden descartar ya que no tienen información útil para el análisis.
+-   Ejemplos de datos numéricos almacenados como texto que se pueden limpiar y convertir.
+
+Los siguientes métodos son útiles para explorar los datos:
+
+-   `DataFrame.describe()` (con `include = 'all'` para obtener columnas categóricas y numéricas)
+-   `Series.value_counts()` y `Series.head()` si alguna columna necesita una revisión más detallada.
+
+## Instrucciones
+
+1.  Utilice `DataFrame.describe()` para ver las estadísticas descriptivas de todas las columnas.
+
+2.  Escriba señalando:
+
+    -   Cualquier columna que tenga principalmente un valor que sea candidato a descartarse
+    -   Cualquier columna que necesite más investigación.
+    -   Cualquier ejemplo de datos numéricos almacenados como texto que deba limpiarse.
+
+3.  Si necesita investigar más alguna columna, hágalo y anote cualquier cosa adicional que encuentre.
+
+4.  Probablemente descubrió que las columnas de precio y odómetro son valores numéricos almacenados como texto. Para cada columna:
+
+    -   Elimine cualquier carácter no numérico.
+    -   Convierta la columna a tipo numérico.
+    -   Utilice `DataFrame.rename()` para cambiar el nombre de la columna a `odometer_km`.
+
+<br>
+
+## 4. Exploración de las columnas odómetro y precio
+
+En el paso anterior, encontró de que hay varias columnas de texto en las que casi todos los valores son iguales (`seller` y `offer_type`). También convirtió las columnas `price` y `odometer` a tipos numéricos y cambió el nombre de odometer a `odometer_km`.
+
+Continuemos explorando los datos, específicamente buscando datos que no se vean bien. Comenzaremos analizando las columnas `odometer_km` y `price`. Estos son los pasos que seguiremos:
+
+-   Analice las columnas utilizando valores mínimos y máximos y busque cualquier valor que parezca demasiado alto o bajo (valores atípicos) que podríamos querer eliminar.
+
+-   Usaremos:
+
+    -   `Series.unique()`. Forma para ver cuántos valores únicos.
+
+    -   `Series.describe()` para ver mínimo/máximo/mediana/media, etc.
+
+    -   `Series.value_counts()`, con algunas variaciones:
+
+        -   encadenado a `.head()` si hay muchos valores.
+        -   Debido a que `Series.value_counts()` devuelve una serie, podemos usa `Series.sort_index()` con `ascennding = True` o `False` para ver los valores más altos y más bajos con sus conteos (también puede encadenar a `head()`).
+
+    -   Para eliminar valores atípicos, puede utilizar `df[(df["col"]> x) & (df["col"] < y)]`, pero es más legible usar `df[df["col"].between(x, y)]`.
+
+## Instrucciones
+
+1.  Para cada una de las columnas `odometer_km` y `price`:
+
+    -   Utilice las técnicas anteriores para explorar los datos.
+    -   Si encuentra que hay valores atípicos, elimínelos y escriba un párrafo explicando su decisión.
+    -   Una vez que haya eliminado los valores atípicos, haga algunas observaciones sobre los valores restantes.
+
+<br>
+
+## 5. Explorando las columnas de fecha
+
+Pasemos ahora a las columnas de fechas y comprendamos el rango de fechas que cubren los datos.
+
+Hay 5 columnas que deben representar valores de fecha. Algunas de estas columnas fueron creadas por el rastreador, otras provienen del sitio web. Podemos diferenciar haciendo referencia al diccionario de datos:
+
+-   `date_crawled`: agregado por el rastreador
+-   `last_seen`: agregado por el rastreador
+-   `ad_created`: del sitio web
+-   `registration_month`: del sitio web
+-   `registration_year`: del sitio web
+
+Pandas identifica las columnas `date_crawled`, `last_seen` y ad\_c`r`eated como valores de cadena de texto. Debido a esto, necesitamos convertir los datos en una representación numérica para que podamos entenderlos cuantitativamente. Las otras dos columnas se representan como valores numéricos, por lo que podemos usar métodos como `Series.describ()` para comprender la distribución sin ningún procesamiento de datos adicional.
+
+Primero entendamos cómo se formatean los valores en las tres columnas de cadena de texto. Todas estas columnas representan valores de marca de tiempo completos, así:
+
+    autos [['date_crawled', 'ad_created', 'last_seen']] [0: 5]
+
+|     |    date\_crawled    |     ad\_created     |      last\_seen     |
+|:---:|:-------------------:|:-------------------:|:-------------------:|
+|  0  | 2016-03-26 17:47:46 | 2016-03-26 00:00:00 | 2016-04-06 06:45:54 |
+|  1  | 2016-04-04 13:38:56 | 2016-04-04 00:00:00 | 2016-04-06 14:45:08 |
+|  2  | 2016-03-26 18:57:24 | 2016-03-26 00:00:00 | 2016-04-06 20:15:37 |
+|  3  | 2016-03-12 16:58:10 | 2016-03-12 00:00:00 | 2016-03-15 03:16:28 |
+|  4  | 2016-04-01 14:38:50 | 2016-04-01 00:00:00 | 2016-04-01 14:38:50 |
+
+Notará que los primeros 10 caracteres representan el día (por ejemplo, `2016-03-12`). Para comprender el rango de fechas, podemos extraer solo los valores de fecha, usar `Series.value_counts()` para generar una distribución y luego ordenar por índice.
+
+Para seleccionar los primeros 10 caracteres en cada columna, podemos usar `Series.str[: 10]`:
+
+    print(autos['date_crawled'].str[: 10])
+
+## Instrucciones
+
+1.  Utilice el flujo de trabajo que se acaba de describir para calcular la distribución de valores en las columnas `date_crawled`, `ad_created` y `last_seen` (todas las columnas de cadena de texto) como porcentajes.
+
+    -   Para incluir valores *missing* en la distribución y usar porcentajes en lugar de recuentos, encadene el método `Series.value_counts(normalize = True, dropna = False)`.
+    -   Para clasificar por fecha en orden ascendente (del más antiguo al más reciente), encadene el método `Series.sort_index()`.
+    -   Describa después de cada exploración de columna para explicar sus observaciones.
+
+2.  Utilice `Series.describe()` para comprender la distribución de `registration_year`.
+
+    -   Describa y explique sus observaciones.
+
+<br>
+
+## 6. Manejo de datos incorrectos del año de registro
+
+Una cosa que se destaca de la exploración realizada en el último paso es que la columna `registration_year` contiene algunos valores raros:
+
+-   El valor mínimo es `1000`, antes de que se inventaran los automóviles.
+-   El valor máximo es `9999`, muchos años en el futuro.
+
+Debido a que un automóvil no puede registrarse por primera vez después de que se vio la lista, cualquier vehículo con un año de registro superior a 2016 es definitivamente inexacto. Determinar el año válido más temprano es más difícil. Siendo realistas, podría estar en algún lugar de las primeras décadas del siglo XX.
+
+Cuente la cantidad de listados con autos que caen fuera del intervalo 1900-2016 y vea si es seguro eliminar esas filas por completo, o si necesita una llógica más personalizada.
+
+## Instrucciones
+
+1.  Decida cuáles son los valores más altos y más bajos aceptables para la columna `registration_year`.
+
+    -   Describa y explique su decisión y por qué.
+
+2.  Elimine los valores fuera de esos límites superior e inferior y calcule la distribución de los valores restantes utilizando `Series.value_counts(normalize = True)`.
+
+    -   Describa y explique sus observaciones.
+
+<br>
+
+## 7. Exploración del precio por marca
+
+Una de las técnicas de análisis que aprendió en este curso es la agregación. Cuando se trabaja con datos sobre automóviles, es natural explorar variaciones entre diferentes marcas de automóviles. Podemos utilizar la agregación para comprender la columna `brand`.
+
+Exploraremos cómo usar bucles para realizar agregaciones. Así es como se ve el proceso:
+
+-   Identificar los valores únicos que queremos agregar
+
+-   Crear un diccionario vacío para almacenar los datos agregados
+
+-   Recorrer los valores únicos y para cada uno:
+
+    -   Separar el dataframe por valores únicos
+    -   Calcular la media de la columna que nos interese
+    -   Asignar val/mean al diccionario.
+
+## Instrucciones
+
+1.  Explore los valores únicos en la columna `brand` y decida por qué marcas desea agregar.
+
+    -   Es posible que desee seleccionar los 20 principales, o puede que desee seleccionar aquellas que tienen más de un cierto porcentaje de los valores totales (por ejemplo, `> 5%`).
+    -   Recuerde que `Series.value_counts()` produce una serie con etiquetas de índice, por lo que puede usar el atributo `Series.index` para acceder a las etiquetas, si lo desea.
+
+2.  Escriba un párrafo breve que describa los datos de la marca y explique las marcas que ha elegido agregar.
+
+3.  Cree un diccionario vacío para almacenar sus datos agregados.
+
+    -   Recorra las marcas seleccionadas y asigne el precio medio al diccionario, con el nombre de la marca como clave.
+    -   Imprima su diccionario de datos agregados y escriba un párrafo analizando los resultados.
+
+<br>
+
+## 8. Almacenamiento de datos agregados en un marco de datos
+
+En el paso annterior, agregó todas las marcas para comprender el precio medio y debe haber observaddo que en las 6 principales marcas, hay una diferencia de precios distinta:
+
+-   Audi, BMW y Mercedes Benz son más caros
+-   Ford y Opel son menos costosos
+-   Volkswagen está en el medio
+
+Para las 6 marcas principales, use la agregación para comprender el millaje promedio de esos autos y si hay algún vínculo visible con el precio medio. Si bien nuestro instinto natural puede ser mostrar ambos objetos de series agregadas y compararlos visualmente, esto tiene algunas limitaciones:
+
+-   Es difícil comparar más de dos objetos de series agregadas si queremos extendernos a más columnas.
+-   No podemos comparar más de unas pocas filas de cada objeto de la serie.
+-   Solo podemos ordenar por el índice (nombre de marca) de ambos objetos de la serie para que podamos hacer comparaciones visuales fácilmente.
+
+En su lugar, podemos combinar los datos de ambos objetos de la serie en un solo dataframe (con un índice compartido) y mostrarlo directamente. Para hacer esto, necesitará usar dos métodos de `Pandas`:
+
+-   Constructor de series de `Pandas`
+-   Constructor de dataframes de `Pandas`
+
+Aquí hay un ejemplo del constructor de series que usa el diccionario `brand_mean_prices`:
+
+    bmp_series = pd.Series(brand_mean_prices)
+    print(bmp_series)
+
+Las claves del diccionario se convirtieron en el índice del objeto de serie. Luego, podemos crear un dataframe de una sola columna a partir de este objeto de serie. Necesitamos usar el parámetro de columnas cuando llamamos al constructor de dataframes (que acepta un objeto similar a una matriz) para especificar el nombre de la columna (o el nombre de la columna se establecerá en 0 por defecto):
+
+    df = pd.DataFrame(bmp_series, columnas = ['mean_price'])
+    df
+
+|                | mean\_price |
+|:--------------:|:-----------:|
+|       bmw      |     8332    |
+| mercedes\_benz |     8628    |
+|      opel      |     2975    |
+|      audi      |     9336    |
+|   volkswagen   |     5402    |
+|      vado      |     3749    |
+
+## Instrucciones
+
+1.  Utilice el método de bucle del paso anterior para calcular el kilometraje medio y el precio medio de cada una de las principales marcas, almacenando los resultados en un diccionario.
+2.  Convierta ambos diccionarios en objetos de serie, utilizando el constructor de series.
+3.  Cree un dataframe a partir del objeto de la primera serie utilizando el constructor de dataframe.
+4.  Asigne la otra serie como una nueva columna en este dataframe.
+5.  Imprima el dataframe y escriba un párrafo analizando los datos agregados.
+
+<br>
+
+## 9. Próximos pasos
+
+En este proyecto guiado, practicó la aplicación de una variedad de métodos `Pandas` para explorar y comprender un conjunto de datos en el listado de automóviles. Sin embargo, aún es posible depurar un poco más los datos y extraer información útil que todavía sigue escondida.
+
+Estos son algunos de los siguientes pasos que debe considerar realizar si desea complementar su análisis:
+
+-   Próximos pasos de limpieza de datos:
+
+    -   Identificar datos categóricos que usan palabras en alemán, traducirlos y asignar los valores a sus contrapartes en inglés.
+    -   Convertir las fechas en datos numéricos uniformes, de modo que `"2016-03-21"` se convierta en el número entero `20160321`.
+    -   Ver si hay palabras clave específicas en la columna de nombre que pueda extraer como nuevas columnas
+
+-   Próximos pasos del análisis:
+
+    -   Encontrar las combinaciones de marca/modelo más comunes
+    -   Dividir `odometer_km` en grupos y usar la agregación para ver si los precios promedio siguen algún patrón basado en el kilometraje.
+    -   ¿Cuánto más baratos son los autos con daños que sus contrapartes sin daños?
